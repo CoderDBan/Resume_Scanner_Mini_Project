@@ -1,4 +1,4 @@
-from Resume_scanner import is_fake
+from Resume_scanner import is_fake,insertOneRecordToDatabase
 from fastapi import FastAPI, UploadFile, File
 from pdf2image import convert_from_bytes
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,7 +31,8 @@ async def check_cv(cv_file: UploadFile = File(...), id_file: UploadFile = File(.
     if(id_file.filename.endswith('.pdf')):
         # Convert PDF to images
         id_images = convert_from_bytes(id_data)
-    result = is_fake(cv_file, id_file,cv_images,id_images,cv_data,id_data)
+    # result = is_fake(cv_file, id_file,cv_images,id_images,cv_data,id_data)
+    insertOneRecordToDatabase(cv_data)
 
     # Return the result as a response
     return result

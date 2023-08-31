@@ -23,42 +23,20 @@ except pymongo.errors.ConfigurationError:
 db = client.Resume_Scanner
 
 my_collection = db["Resume_Scanner_Collection"]
-#function to input resume in pdf format and id in jpeg format and upload in Resume_Scanner mongodb database
-def insert():
-    print('Enter your ID document')  
-    id=input()
-    print('\n\tPlease enter the path where your file is stored:')
-    path=input()
-    print("\n")
-    try:
-        with open(path, 'rb')as f:
-            my_file=(f).read()
-            #print(type(my_file))
-            my_collection.insert({'id':id,'resume':my_file})
-    except FileNotFoundError :
-            print ("File not found.")
-            else:
-                                       print ('Document uploaded successfully.')
-       except Exception as e:
-           print (e.__doc__)
-       finally:
-           pass      
-       def get_data ():
-           for i in range(len(my_collection)):
-           data=[]
-       for x in my_collection['resume']:
-           data.append((x))
-       return data
-       def deleteData () :
-           my_collection.delete_one({"id":id})
-       def updateData () :
-           my_collection.update_one({ "id" : id }, { "$set":{ "name":"<NAME>" } })
-       def searchData () :
-           query={"id":{"$eq":id}}
-       result=get_data()
-       print(result[0])
-       while True:
-           choice=int(input('''What do you wish to do? \n1-Upload new Document.\n2-Delete existing Document.\
+'''
+Assume that the app.py file will be utilising a method from this file. the method is expected to take a file as parameter and place it in the database mentioned above. The database is of Mongo DB. the configurations are done above.
+
+'''
+#this method must take an input that is get a single file by an Id parameter namely file Id
+def get_all():
+    return my_collection.find({})
+def insertOneRecordToDatabase (record):
+    try :
+        my_collection.insert_one({"name": record})
+        return True
+    except Exception as e:
+        print('error',e,type(e))
+
 
 
     
