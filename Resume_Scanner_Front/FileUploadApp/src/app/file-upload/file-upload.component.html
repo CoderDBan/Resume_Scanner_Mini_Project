@@ -1,0 +1,6 @@
+<h2>Upload CV and ID Files</h2>
+<form #uploadForm="ngForm" (ngSubmit)="onSubmit(uploadForm)">
+  <input type="file" (change)="onFileSelected($event, 'cv')" accept=".pdf">
+  <input type="file" (change)="onFileSelected($event, 'id')" accept=".jpg">
+  <button type="submit">Submit</button>
+</form>

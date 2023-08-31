@@ -1,0 +1,15 @@
+python-docx
+numpy
+opencv-python
+PyMuPDF
+python-multipart
+fastapi
+uvicorn
+scikit-image
+werkzeug
+google-cloud-documentai 
+google-auth
+filetype
+pdf2image
+google-cloud-aiplatform
+vertexai
