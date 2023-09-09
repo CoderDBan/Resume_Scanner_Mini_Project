@@ -4,13 +4,10 @@ from docx import Document
 import fitz
 import face_recognition
 from skimage.io import imread
-# from id_validator import process_document
-from google.api_core.exceptions import InvalidArgument
-from skimage.transform import resize
-import logging
 import pymongo
 import sys
-
+import logging as log
+log.basicConfig(level=log.INFO)
 ###DB Connection###
 
 try:
@@ -28,40 +25,14 @@ Assume that the app.py file will be utilising a method from this file. the metho
 
 '''
 #this method must take an input that is get a single file by an Id parameter namely file Id
-def get_all():
-    return my_collection.find({})
+def get_all(id):
+    return my_collection.find_one("_id")
 def insertOneRecordToDatabase (record):
     try :
-        my_collection.insert_one({"name": record})
-        return True
+        rec=my_collection.insert_one(record)
+        return str(rec.inserted_id)
     except Exception as e:
         print('error',e,type(e))
-
-
-
-    
-
-
-
-
-
-# Configure the logging settings
-logging.basicConfig(level=logging.DEBUG,  # Set the minimum logging level
-                    format='%(asctime)s - %(levelname)s - %(message)s')  # Define the log message format
-
-# Create a logger instance
-logger = logging.getLogger()
-
-# Create a console handler and set its log level
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)  # Set the desired log level for console logs
-
-# Create a formatter and add it to the console handler
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(formatter)
-
-# Add the console handler to the logger
-logger.addHandler(console_handler)
 
 
 
@@ -80,8 +51,6 @@ def rotate_image(image, angle):
 
 
 # Function to extract images if the file is of doc type
-
-
 def extract_images_docx(cv_doc):
     doc = Document(cv_doc)
     iml=[]
@@ -94,8 +63,6 @@ def extract_images_docx(cv_doc):
     return iml
 
 # Function to extract images if the document is of PDF format
-
-
 def extract_images_pdf(cv_doc):
     iml=[]
     # Open the PDF file
@@ -108,8 +75,6 @@ def extract_images_pdf(cv_doc):
     return iml
 
 # Function to extract human faces from another image
-
-
 def get_faces(image,rotating):
     angles = [30, 60, 90, -30, -60, -90]
     faces = []
@@ -117,10 +82,10 @@ def get_faces(image,rotating):
     rotates=[rgb_image]
     if rotating:
         rotates+=[rotate_image(rgb_image, angle) for angle in angles]
-    logger.info("rotates "+ str(len(rotates)))
+    log.info("rotates "+ str(len(rotates)))
     for rt_img in rotates:
         # Detect faces in the image
-        logger.info("fetching face ...")
+        log.info("fetching face ...")
         face_locations = face_recognition.face_locations(rt_img)
         # Extract the face region
         for face_location in face_locations:
@@ -155,21 +120,15 @@ def extract_human_faces(inp_doc, scannedpdfImages, rotating=False):
     return humanImages
 
 # Function to identify Fake CV
-
-
-def is_fake(cv_path, id_path, cvimages, idimages, cv_data, id_data):
+def is_fake(cv_path, id_path, cvimages, idimages):
     # Initializations
     (overallStat, matchtype) = ('FAIL', 'NO-Match')
-
-    (passed_criterias, failed_criterias, analysed_data_id,
-     analysed_data_cv) = (None, None, None, None)
-
     # extract face from CV
-    logger.info("getting Images")
+    log.info("getting Images")
     face_from_cv = extract_human_faces(cv_path, cvimages)
-    logger.info("CV images fetched")
+    log.info("CV images fetched")
     faces_from_id = extract_human_faces(id_path, idimages,True)
-    logger.info("id Images fetched")
+    log.info("id Images fetched")
     if (len(faces_from_id) < 1):
         return {
             'CV_MATCH': matchtype,
@@ -182,7 +141,7 @@ def is_fake(cv_path, id_path, cvimages, idimages, cv_data, id_data):
             'ID-Authentication':None,
             'Id-Summary': None,
             'Over-All-Status': overallStat}
-    logger.info("comparing images")
+    log.info("comparing images")
     for face in face_from_cv:
         matchtype = "Full Match" if sum(face_recognition.compare_faces(
             faces_from_id, face)) != 0 else "No-Match"
@@ -192,11 +151,17 @@ def is_fake(cv_path, id_path, cvimages, idimages, cv_data, id_data):
             'ID-Authentication':None,
             'Id-Summary': None,
             'Over-All-Status': overallStat}            
-    # un-comment theese lines and comment the others to stop the description invocation    
+    # un-comment theese lines and comment the others to stop the description invocation
+    overallStat='PASS'
     return {
         'CV_MATCH': matchtype,
         'ID-Authentication':None,
         'Id-Summary': None,
         'Over-All-Status': overallStat}
-        
+def validate_and_update(details):
+    res=is_fake(details["cv_path"],details["id_path"],details["cv_images"],details["id_images"])
+    details["result"]=res
+    details["cv_path"],details["id_path"],details["cv_images"],details["id_images"]=None,None,None,None
+    return insertOneRecordToDatabase(details)
+    
     
